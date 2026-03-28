@@ -1,0 +1,20 @@
+services:
+  markview:
+    build: .
+    volumes:
+      - .:/app
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - node_modules:/app/node_modules
+      - cargo_registry:/root/.cargo/registry
+      - target:/app/src-tauri/target
+    environment:
+      - DISPLAY=${DISPLAY}
+      - PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+      - PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+    network_mode: host
+    command: bash -c "npm install && npx tauri dev"
+
+volumes:
+  node_modules:
+  cargo_registry:
+  target:
