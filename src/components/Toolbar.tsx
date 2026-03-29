@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { RenderMode, ViewTab } from "../App";
+import { exportHtml, exportPdf, exportPng, exportPptx } from "../utils/exporter";
 import "./Toolbar.css";
 
 interface ToolbarProps {
@@ -20,15 +21,11 @@ interface ExportFormat {
   ext: string;
 }
 
-const MARP_FORMATS: ExportFormat[] = [
+const EXPORT_FORMATS: ExportFormat[] = [
+  { value: "html", label: "HTML", ext: "html" },
   { value: "pdf", label: "PDF", ext: "pdf" },
-  { value: "html", label: "HTML", ext: "html" },
-  { value: "pptx", label: "PPTX", ext: "pptx" },
   { value: "png", label: "PNG", ext: "png" },
-];
-
-const MARKDOWN_FORMATS: ExportFormat[] = [
-  { value: "html", label: "HTML", ext: "html" },
+  { value: "pptx", label: "PPTX", ext: "pptx" },
 ];
 
 function Toolbar({
@@ -40,18 +37,10 @@ function Toolbar({
   css,
   onFileImport,
 }: ToolbarProps) {
-  const currentFormats = mode === "marp" ? MARP_FORMATS : MARKDOWN_FORMATS;
-  const [exportFormat, setExportFormat] = useState(currentFormats[0].value);
+  const [exportFormat, setExportFormat] = useState("html");
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Reset format when mode changes
-  useEffect(() => {
-    const valid = currentFormats.find((f) => f.value === exportFormat);
-    if (!valid) {
-      setExportFormat(currentFormats[0].value);
-    }
-  }, [mode, currentFormats, exportFormat]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -79,33 +68,41 @@ function Toolbar({
   };
 
   const handleExport = async () => {
-    const fmt = currentFormats.find((f) => f.value === exportFormat) ?? currentFormats[0];
+    const fmt = EXPORT_FORMATS.find((f) => f.value === exportFormat) ?? EXPORT_FORMATS[0];
+    const isMarp = mode === "marp";
 
     try {
+      setExporting(true);
+
+      if (fmt.value === "pdf") {
+        // PDF: open print dialog (no file save dialog needed)
+        await exportPdf(html, css, isMarp);
+        return;
+      }
+
       const outputPath = await save({
         filters: [{ name: fmt.label, extensions: [fmt.ext] }],
         defaultPath: `output.${fmt.ext}`,
       });
       if (!outputPath) return;
 
-      if (mode === "marp") {
-        await invoke("export_marp", {
-          markdown,
-          outputPath,
-          format: fmt.value,
-        });
-      } else {
-        await invoke("export_markdown_html", {
-          html,
-          css,
-          outputPath,
-        });
+      if (fmt.value === "html") {
+        await exportHtml(html, css, outputPath);
+      } else if (fmt.value === "png") {
+        await exportPng(html, css, isMarp, outputPath);
+      } else if (fmt.value === "pptx") {
+        await exportPptx(html, css, isMarp, outputPath);
       }
+
       alert(`${fmt.label} を保存しました`);
     } catch (e) {
       alert(`エクスポートエラー: ${e}`);
+    } finally {
+      setExporting(false);
     }
   };
+
+  const disabled = !markdown.trim() || exporting;
 
   return (
     <div className="toolbar">
@@ -134,18 +131,18 @@ function Toolbar({
         </button>
       </div>
       <div className="toolbar-right">
-        <div className={`toolbar-export ${!markdown.trim() ? "toolbar-export--disabled" : ""}`} ref={dropdownRef}>
+        <div className={`toolbar-export ${disabled ? "toolbar-export--disabled" : ""}`} ref={dropdownRef}>
           <button
             className="toolbar-dropdown-trigger"
-            onClick={() => markdown.trim() && setDropdownOpen(!dropdownOpen)}
-            disabled={!markdown.trim()}
+            onClick={() => !disabled && setDropdownOpen(!dropdownOpen)}
+            disabled={disabled}
           >
-            {currentFormats.find((f) => f.value === exportFormat)?.label ?? exportFormat}
+            {EXPORT_FORMATS.find((f) => f.value === exportFormat)?.label ?? exportFormat}
             <span className="toolbar-dropdown-arrow">▾</span>
           </button>
           {dropdownOpen && (
             <div className="toolbar-dropdown-menu">
-              {currentFormats.map((f) => (
+              {EXPORT_FORMATS.map((f) => (
                 <button
                   key={f.value}
                   className={`toolbar-dropdown-item ${f.value === exportFormat ? "toolbar-dropdown-item--active" : ""}`}
@@ -159,8 +156,8 @@ function Toolbar({
               ))}
             </div>
           )}
-          <button className="toolbar-button" onClick={handleExport} disabled={!markdown.trim()}>
-            エクスポート
+          <button className="toolbar-button" onClick={handleExport} disabled={disabled}>
+            {exporting ? "処理中..." : "エクスポート"}
           </button>
         </div>
       </div>

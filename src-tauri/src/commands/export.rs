@@ -1,40 +1,7 @@
-use std::process::Command;
-use tempfile::NamedTempFile;
 use std::io::Write;
 
 #[tauri::command]
-pub async fn export_marp(markdown: String, output_path: String, format: String) -> Result<(), String> {
-    let mut tmp = NamedTempFile::with_suffix(".md")
-        .map_err(|e| format!("一時ファイル作成エラー: {}", e))?;
-
-    tmp.write_all(markdown.as_bytes())
-        .map_err(|e| format!("一時ファイル書き込みエラー: {}", e))?;
-
-    let tmp_path = tmp.path().to_string_lossy().to_string();
-
-    let format_flag = match format.as_str() {
-        "pdf" => "--pdf",
-        "html" => "--html",
-        "pptx" => "--pptx",
-        "png" => "--images=png",
-        _ => return Err(format!("未対応の出力形式: {}", format)),
-    };
-
-    let output = Command::new("npx")
-        .args(["marp", format_flag, "--allow-local-files", "-o", &output_path, &tmp_path])
-        .output()
-        .map_err(|e| format!("Marp CLI 実行エラー: {}", e))?;
-
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(format!("エクスポートエラー: {}", stderr));
-    }
-
-    Ok(())
-}
-
-#[tauri::command]
-pub async fn export_markdown_html(html: String, css: String, output_path: String) -> Result<(), String> {
+pub async fn export_html(html: String, css: String, output_path: String) -> Result<(), String> {
     let content = format!(
         "<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"UTF-8\">\n<style>{}</style>\n</head>\n<body>{}</body>\n</html>",
         css, html
@@ -42,6 +9,36 @@ pub async fn export_markdown_html(html: String, css: String, output_path: String
 
     std::fs::write(&output_path, &content)
         .map_err(|e| format!("ファイル書き込みエラー: {}", e))?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn export_png(data: Vec<u8>, output_path: String) -> Result<(), String> {
+    std::fs::write(&output_path, &data)
+        .map_err(|e| format!("ファイル書き込みエラー: {}", e))?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn export_png_zip(images: Vec<(String, Vec<u8>)>, output_path: String) -> Result<(), String> {
+    let file = std::fs::File::create(&output_path)
+        .map_err(|e| format!("ファイル作成エラー: {}", e))?;
+
+    let mut zip = zip::ZipWriter::new(file);
+    let options = zip::write::SimpleFileOptions::default()
+        .compression_method(zip::CompressionMethod::Stored);
+
+    for (name, data) in &images {
+        zip.start_file(name, options)
+            .map_err(|e| format!("ZIP エントリ作成エラー: {}", e))?;
+        zip.write_all(data)
+            .map_err(|e| format!("ZIP 書き込みエラー: {}", e))?;
+    }
+
+    zip.finish()
+        .map_err(|e| format!("ZIP 完了エラー: {}", e))?;
 
     Ok(())
 }

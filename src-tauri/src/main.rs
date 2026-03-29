@@ -10,8 +10,9 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             commands::file::read_file,
             commands::file::write_file,
-            commands::export::export_marp,
-            commands::export::export_markdown_html,
+            commands::export::export_html,
+            commands::export::export_png,
+            commands::export::export_png_zip,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
