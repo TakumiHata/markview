@@ -5,6 +5,7 @@ import Toc from "./components/Toc";
 import Toolbar from "./components/Toolbar";
 import { useMarp } from "./hooks/useMarp";
 import { useMarkdown } from "./hooks/useMarkdown";
+import { useMermaid } from "./hooks/useMermaid";
 import { useToc } from "./hooks/useToc";
 import { detectMode } from "./utils/detectMode";
 import "./App.css";
@@ -24,7 +25,11 @@ function App() {
 
   const marpResult = useMarp(markdown);
   const mdResult = useMarkdown(markdown);
-  const { html, css } = mode === "marp" ? marpResult : mdResult;
+  const { html: rawHtml, css } = mode === "marp" ? marpResult : mdResult;
+
+  // Render mermaid diagrams to SVG
+  const html = useMermaid(rawHtml);
+
   const tocEntries = useToc(markdown);
 
   const handleSlideScrolled = useCallback(() => {

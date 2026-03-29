@@ -31,6 +31,14 @@ function Preview({ mode, html, css, targetSlide, onSlideScrolled }: PreviewProps
       box-shadow: 0 2px 12px rgba(0,0,0,0.4);
       border-radius: 4px;
     }
+    .mermaid {
+      text-align: center;
+      padding: 16px;
+    }
+    .mermaid svg {
+      max-width: 100%;
+      height: auto;
+    }
   </style>
   <script>
     function rescale() {
@@ -57,6 +65,16 @@ function Preview({ mode, html, css, targetSlide, onSlideScrolled }: PreviewProps
 <html>
 <head>
   <style>${css}</style>
+  <style>
+    .mermaid {
+      text-align: center;
+      padding: 16px;
+    }
+    .mermaid svg {
+      max-width: 100%;
+      height: auto;
+    }
+  </style>
 </head>
 <body>${html}</body>
 </html>`;

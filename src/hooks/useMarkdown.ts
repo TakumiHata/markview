@@ -14,6 +14,9 @@ const md: MarkdownIt = new MarkdownIt({
   linkify: true,
   typographer: true,
   highlight: function (str: string, lang: string): string {
+    if (lang === "mermaid") {
+      return `<div class="mermaid">${escapeHtml(str)}</div>`;
+    }
     return `<pre class="code-block"><code class="language-${lang}">${escapeHtml(str)}</code></pre>`;
   },
 });
@@ -70,6 +73,13 @@ const MARKDOWN_CSS = `
     background: none;
     font-size: 14px;
     line-height: 1.6;
+  }
+  .mermaid {
+    margin: 1.5em 0;
+    text-align: center;
+    background: rgba(255,255,255,0.03);
+    border-radius: 8px;
+    padding: 16px;
   }
   table {
     border-collapse: collapse;
