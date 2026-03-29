@@ -1,7 +1,15 @@
 # Markview
 
-Marpライクなスライド機能を持つMarkdownプレビューデスクトップアプリ。
-Docker環境上で動作し、リアルタイムプレビュー・PDF/HTMLエクスポートに対応。
+Marpスライド & Markdownプレビューデスクトップアプリ。
+リアルタイムプレビュー・PDF/HTML/PPTX/PNGエクスポートに対応。
+
+## 機能
+
+- **Marp / Markdown 自動判定** - `marp: true` ディレクティブの有無で自動切替
+- **タブ切替** - 編集 / プレビューをフルスクリーンで表示
+- **目次パネル** - 見出しから自動生成、クリックでスライドにジャンプ
+- **エクスポート** - Marp: PDF / HTML / PPTX / PNG、Markdown: HTML
+- **ファイルインポート** - .md ファイルを開いて自動判定
 
 ## 技術スタック
 
@@ -9,26 +17,17 @@ Docker環境上で動作し、リアルタイムプレビュー・PDF/HTMLエク
 |---------|------|
 | デスクトップフレームワーク | Tauri v2（Rust + WebView） |
 | フロントエンド | React（TypeScript） |
-| Markdownレンダリング | @marp-team/marp-core |
-| PDF出力 | @marp-team/marp-cli |
-| 実行環境 | Docker（Node.js + Chromium + Rust） |
-
-## 機能
-
-- **リアルタイムプレビュー** - 左右分割レイアウト（エディタ + スライドプレビュー）
-- **PDF出力** - Marp CLI経由でPDF生成、保存ダイアログ対応
-- **HTML出力** - スタンドアロンHTMLとしてエクスポート
-- **テーマ切り替え** - default / gaia / uncover をリアルタイムに反映
+| Markdownレンダリング | @marp-team/marp-core / markdown-it |
+| エクスポート | @marp-team/marp-cli |
+| 実行環境 | Docker（開発） / Windows exe（リリース） |
 
 ## セットアップ
 
-### Docker（推奨）
+### Docker（開発）
 
 ```bash
 docker compose up --build
 ```
-
-> WSL2環境ではWSLgまたはX11サーバー（VcXsrv等）が必要です。
 
 ### ローカル（Rustインストール済みの場合）
 
@@ -37,30 +36,16 @@ npm install
 npm run tauri dev
 ```
 
-## ディレクトリ構成
+### Windows exe（リリース）
 
+GitHub Actions で `v*` タグを push すると自動ビルドされます。
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
 ```
-markview/
-├── src/                    # React フロントエンド
-│   ├── components/
-│   │   ├── Editor.tsx      # Markdownエディタ
-│   │   ├── Preview.tsx     # スライドプレビュー（iframe）
-│   │   └── Toolbar.tsx     # テーマ切替・エクスポートボタン
-│   ├── hooks/
-│   │   └── useMarp.ts      # marp-coreラッパーフック
-│   ├── App.tsx
-│   └── main.tsx
-├── src-tauri/              # Rust バックエンド
-│   ├── src/
-│   │   ├── main.rs
-│   │   └── commands/
-│   │       ├── export.rs   # PDF/HTML出力（Marp CLI呼び出し）
-│   │       └── file.rs     # ファイル読み書き
-│   └── tauri.conf.json
-├── Dockerfile
-├── docker-compose.yml
-└── package.json
-```
+
+GitHub Releases にドラフトが作成されます。
 
 ## ライセンス
 
