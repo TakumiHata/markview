@@ -93,19 +93,38 @@ export async function exportHtml(
 export async function exportPdf(html: string, css: string, isMarp: boolean): Promise<void> {
   const printContent = buildPrintHtml(html, css, isMarp);
 
-  const printWindow = window.open("", "_blank");
-  if (!printWindow) {
-    throw new Error("印刷ウィンドウを開けませんでした");
+  // Create a hidden iframe for printing (window.open is blocked in Tauri WebView)
+  const iframe = document.createElement("iframe");
+  iframe.style.position = "fixed";
+  iframe.style.left = "-9999px";
+  iframe.style.top = "0";
+  iframe.style.width = "1280px";
+  iframe.style.height = "720px";
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentDocument;
+  if (!doc) {
+    document.body.removeChild(iframe);
+    throw new Error("印刷用フレームを作成できませんでした");
   }
 
-  printWindow.document.write(printContent);
-  printWindow.document.close();
+  doc.open();
+  doc.write(printContent);
+  doc.close();
 
-  printWindow.onload = () => {
-    setTimeout(() => {
-      printWindow.print();
-    }, 500);
-  };
+  // Wait for content to render, then print
+  await new Promise<void>((resolve) => {
+    iframe.onload = () => {
+      setTimeout(() => {
+        iframe.contentWindow?.print();
+        // Clean up after print dialog closes
+        setTimeout(() => {
+          document.body.removeChild(iframe);
+          resolve();
+        }, 1000);
+      }, 500);
+    };
+  });
 }
 
 function buildPrintHtml(html: string, css: string, isMarp: boolean): string {
