@@ -21,11 +21,16 @@ interface ExportFormat {
   ext: string;
 }
 
-const EXPORT_FORMATS: ExportFormat[] = [
+const MARP_FORMATS: ExportFormat[] = [
   { value: "html", label: "HTML", ext: "html" },
   { value: "pdf", label: "PDF", ext: "pdf" },
   { value: "png", label: "PNG", ext: "png" },
   { value: "pptx", label: "PPTX", ext: "pptx" },
+];
+
+const MARKDOWN_FORMATS: ExportFormat[] = [
+  { value: "html", label: "HTML", ext: "html" },
+  { value: "png", label: "PNG", ext: "png" },
 ];
 
 function Toolbar({
@@ -37,10 +42,19 @@ function Toolbar({
   css,
   onFileImport,
 }: ToolbarProps) {
+  const currentFormats = mode === "marp" ? MARP_FORMATS : MARKDOWN_FORMATS;
   const [exportFormat, setExportFormat] = useState("html");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Reset format when mode changes
+  useEffect(() => {
+    const valid = currentFormats.find((f) => f.value === exportFormat);
+    if (!valid) {
+      setExportFormat(currentFormats[0].value);
+    }
+  }, [mode, currentFormats, exportFormat]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -68,7 +82,7 @@ function Toolbar({
   };
 
   const handleExport = async () => {
-    const fmt = EXPORT_FORMATS.find((f) => f.value === exportFormat) ?? EXPORT_FORMATS[0];
+    const fmt = currentFormats.find((f) => f.value === exportFormat) ?? currentFormats[0];
     const isMarp = mode === "marp";
 
     try {
@@ -137,12 +151,12 @@ function Toolbar({
             onClick={() => !disabled && setDropdownOpen(!dropdownOpen)}
             disabled={disabled}
           >
-            {EXPORT_FORMATS.find((f) => f.value === exportFormat)?.label ?? exportFormat}
+            {currentFormats.find((f) => f.value === exportFormat)?.label ?? exportFormat}
             <span className="toolbar-dropdown-arrow">▾</span>
           </button>
           {dropdownOpen && (
             <div className="toolbar-dropdown-menu">
-              {EXPORT_FORMATS.map((f) => (
+              {currentFormats.map((f) => (
                 <button
                   key={f.value}
                   className={`toolbar-dropdown-item ${f.value === exportFormat ? "toolbar-dropdown-item--active" : ""}`}
