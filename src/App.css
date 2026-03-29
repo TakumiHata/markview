@@ -3,15 +3,27 @@
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
+  background-color: var(--bg-primary);
 }
 
-.split-pane {
+.main-content {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+}
+
+.main-content > .editor {
+  flex: 1;
+  min-width: 0;
+}
+
+.preview-layout {
   display: flex;
   flex: 1;
   overflow: hidden;
 }
 
-.split-pane > * {
+.preview-layout > .preview {
   flex: 1;
   min-width: 0;
 }
