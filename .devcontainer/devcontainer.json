@@ -1,0 +1,14 @@
+{
+  "name": "markview",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/rust:1": {}
+  },
+  "forwardPorts": [1420],
+  "postCreateCommand": "npm install",
+  "remoteUser": "node",
+  "mounts": [
+    "source=${localWorkspaceFolderBasename}-node_modules,target=${containerWorkspaceFolder}/node_modules,type=volume"
+  ]
+}
