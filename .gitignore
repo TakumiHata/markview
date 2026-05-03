@@ -3,3 +3,6 @@ dist/
 target/
 src-tauri/target/
 *.pdf
+
+# MCP configuration (contains tokens)
+.mcp.json
